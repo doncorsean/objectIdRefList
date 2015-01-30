@@ -25,9 +25,9 @@ class Foo extends MongoRecord[Foo] with ObjectIdPk[Foo] with IndexedRecord[Foo] 
   def meta = Foo
   def idAsString: String = id.toString
 
-  object date extends DateTimeField(this)
-  object idList1 extends ObjectIdRefListField(this, Bar)
-  object idList2 extends ObjectIdRefListField(this, Bar)
+  object idRef extends ObjectIdField(this)
+  object idRefList1 extends ObjectIdRefListField(this, Bar)
+  object idRefList2 extends ObjectIdRefListField(this, Bar)
 
 }
 
@@ -44,26 +44,26 @@ object Foo extends Foo with MongoMetaRecord[Foo] with Loggable {
 
     // Transforms JSON passed to RestHelper
     val newJson = in transform {
-      case JField("idList1", JArray(idList)) => {
+      case JField("idRefList1", JArray(idList)) => {
         val objectIds = idList.collect {
           case JString(id) => JObject(List(JField("$oid", id)))
         }
-        JField("idList1", JArray(objectIds))
+        JField("idRefList1", JArray(objectIds))
       }
-      case JField("idList2", JArray(objectIdStrings)) => {
+      case JField("idRefList2", JArray(objectIdStrings)) => {
         val objectIds = objectIdStrings.collect {
           case JString(id) => JObject(List(JField("$oid", id)))
         }
-        JField("idList2", JArray(objectIds))
+        JField("idRefList2", JArray(objectIds))
       }
     }
 
     for {
-      foo1 <- Full(Foo.createRecord.idList1(List(new ObjectId(),new ObjectId())).idList2(List(new ObjectId(),new ObjectId())))
+      foo1 <- Full(Foo.createRecord.idRefList1(List(new ObjectId(),new ObjectId())).idRefList2(List(new ObjectId(),new ObjectId())))
       foo2 <- Foo.fromJValue(in)
       foo3 <- Foo.fromJValue(newJson)
     } yield {
-      foo1.idList1.get.map(id => logger.info(s"foo.idList1.get.map class:${id.getClass}"))
+      foo1.idRefList1.get.map(id => logger.info(s"foo.idList1.get.map class:${id.getClass}"))
 
       //Below causes java.lang.ClassCastException: java.lang.String cannot be cast to org.bson.types.ObjectId
       //foo2.idList1.get.map(id => logger.info(s"foo2.idList1.get.map class:${id.isInstanceOf[ObjectId]}"))
@@ -108,8 +108,8 @@ object Foo extends Foo with MongoMetaRecord[Foo] with Loggable {
   }
   def getFoosFor(bar:Bar) = {
     Foo.or(
-      _.where((_.idList1 contains bar.id.get)),
-      _.where((_.idList2 contains bar.id.get))
+      _.where((_.idRefList1 contains bar.id.get)),
+      _.where((_.idRefList2 contains bar.id.get))
     ).fetch()
   }
 
