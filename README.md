@@ -41,6 +41,13 @@ Host: localhost:8080
 	"idRef": "54485112d4c6164eb9412dd0"
 }
 
+###### Sample Curl request
+
+curl -i -HAccept:application/json -HContent-type:application/json -d'{
+"idRefList1": ["5449c9e4d4c6a72dc51949ff"],
+"idRefList2": ["5449cadfd4c6df9b3348f691"],
+"idRef": "54485112d4c6164eb9412dd0"
+}' -XPUT http://localhost:8080/foos
 
 ###### Expectation:
 
