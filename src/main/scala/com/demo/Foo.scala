@@ -38,8 +38,12 @@ object Foo extends Foo with MongoMetaRecord[Foo] with Loggable {
   override def collectionName = "foos"
 
   def apply(in: JValue): Box[Foo] = {
-    logger.info(s"json in:${in}")
-    val after = in transform {
+
+    // Logs JSON passed to RestHelper
+    logger.info(s"json before transform:${pretty(render(in))}")
+
+    // Transforms JSON passed to RestHelper
+    val newJson = in transform {
       case JField("idList1", JArray(idList)) => {
         val objectIds = idList.collect {
           case JString(id) => JObject(List(JField("$oid", id)))
@@ -53,11 +57,32 @@ object Foo extends Foo with MongoMetaRecord[Foo] with Loggable {
         JField("idList2", JArray(objectIds))
       }
     }
-    logger.info(s"json after transform:${pretty(render(after))}")
 
-    val res = Foo.fromJValue(after)
-    logger.info(s"deserialization:${res}")
-    res
+    for {
+      foo1 <- Full(Foo.createRecord.idList1(List(new ObjectId(),new ObjectId())).idList2(List(new ObjectId(),new ObjectId())))
+      foo2 <- Foo.fromJValue(in)
+      foo3 <- Foo.fromJValue(newJson)
+    } yield {
+      foo1.idList1.get.map(id => logger.info(s"foo.idList1.get.map class:${id.getClass}"))
+
+      //Below causes java.lang.ClassCastException: java.lang.String cannot be cast to org.bson.types.ObjectId
+      //foo2.idList1.get.map(id => logger.info(s"foo2.idList1.get.map class:${id.isInstanceOf[ObjectId]}"))
+      //foo3.idList1.get.map(id => logger.info(s"foo2.idList1.get.map class:${id.isInstanceOf[ObjectId]}"))
+
+      logger.info(s"Foo.createRecord:${foo1}")
+      logger.info(s"Deserialization of json from API (without transformation):${foo2}")
+      logger.info(s"Deserialization after transform:${foo3}")
+    }
+
+    logger.info(s"json after transform:${pretty(render(newJson))}")
+
+    // When ObjectIdRefListField is serialized Lift produces a List[String].
+    // I was expecting fromJValue to realize that the field it was deserializing
+    // was ObjectIdRefList and convert the List[String] to a List[ObjectId].
+    // Instead it is storing into mongo as List[String] which causes
+    // java.lang.ClassCastException: java.lang.String cannot be cast to org.bson.types.ObjectId
+    // as well as other issues when searching and using Rogue to query as Rogue is expecting ObjectId.
+    Foo.fromJValue(in)
   }
   def unapply(in: JValue): Option[Foo] = {
     apply(in)

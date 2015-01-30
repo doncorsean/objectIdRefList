@@ -1,6 +1,5 @@
 package bootstrap.liftweb
 
-import com.demo.MongoConfig
 import net.liftweb._
 import common._
 import http._
