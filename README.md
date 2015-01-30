@@ -40,3 +40,8 @@ Host: localhost:8080
 	"idRefList2": ["5449cadfd4c6df9b3348f691"],
 	"idRef": "54485112d4c6164eb9412dd0"
 }
+
+
+###### Expectation:
+
+It was my (incorrect) assumption that I would be able to put/post json in the serialized structure lift served via get and have lift deserialize correctly. If the serialization causes List[ObjectId] => List[String] shouldn't the default deserialization behaviour be to perform the reverse?
