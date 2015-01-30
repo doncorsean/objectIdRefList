@@ -26,7 +26,7 @@ package api {
     serve {
 
       case "foos" :: Nil JsonGet _ =>
-        Foo.findAll: JValue
+        List(Foo.createRecord): JValue
 
       case "foos" :: Foo(foo) :: Nil JsonGet _ =>
         foo.asJValue
@@ -37,8 +37,6 @@ package api {
       case "foos" :: Nil JsonPut Foo(foo) -> _ =>
         Foo.add(foo) : JValue
 
-      case "foos" :: Foo(foo) :: Nil JsonDelete _ =>
-        Foo.delete(foo.id.get).map(a => a: JValue)
     }
   }
 }
