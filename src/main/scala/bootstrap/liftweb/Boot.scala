@@ -36,7 +36,6 @@ class Boot extends Loggable {
     LiftRules.early.append(_.setCharacterEncoding("UTF-8"))
 
 	  // Hook up web-service
-    LiftRules.dispatch.append(RestAPI)
     LiftRules.statelessDispatch.append(RestAPI)
   }
 }
